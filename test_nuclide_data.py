@@ -14,11 +14,12 @@ class TestNuclideData(unittest.TestCase):
     def test_isotopes(self):
         """Do we have the correct isotopes for select elements?"""
 
+        print("test_isotopes")
         zs = [1, 8, 56, 95]
-        isos = [range(1, 8),
-                range(12, 29),
-                range(112, 154),
-                range(230, 250),]
+        isos = [list(range(1, 8)),
+                list(range(12, 29)),
+                list(range(112, 154)),
+                list(range(230, 250)),]
         for z, ref_iso in zip(zs, isos):
             iso = nuclide_data.isotopes[z]
             assert ref_iso == iso
@@ -35,7 +36,7 @@ class TestNuclideData(unittest.TestCase):
                           [0.,] ]
 
         for n, ref_isomers in zip(nuclides, isomer_states):
-            isomers = nuclide_data.isomers(*n)
+            isomers = list(nuclide_data.isomers(*n))
             assert ref_isomers == isomers
 
     def ufloat_equiv(self, a, b):

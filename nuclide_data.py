@@ -28,9 +28,6 @@ mev_per_c_2_amu = 1. / 931.494061
 
 
 
-
-    
-
 # NIST data -------------------------------------------------------------
 def split_line(line):
     return map(str.strip, line.split('='))
@@ -114,7 +111,7 @@ def do_if_present(string, func, default=None):
         return func(string)
     else:
         return default
-    
+
 def process_branch(s):
     try:
         return float(s) / 100.
@@ -160,7 +157,7 @@ wallet_file = gzip.open(wallet_filename, 'rb')
 wallet_content = wallet_file.read()
 wallet_file.close()
 
-wallet_lines = wallet_content.split('\n')[:-1]
+wallet_lines = wallet_content.decode('utf8').split('\n')[:-1]
 
 wallet_nuclide_processed_list = []
 for line in wallet_lines:
@@ -216,7 +213,7 @@ for el in wallet_nuclide_processed_list:
 default_isomer_E = {}
 meta_suffixes = 'mnopqrs'
 for n in nuclides:
-    Es = nuclides[n].keys()
+    Es = list(nuclides[n].keys())
 
     if n[0] == 0: continue
 
@@ -247,11 +244,11 @@ def return_nominal_value(Z_or_symbol, A, E, attribute):
             Z = sym2z[Z_or_symbol.title()]
     except AttributeError:
         Z = Z_or_symbol
-   
+
     # testing for no A, then return elemental value
     if A is None:
         return atomic_weights[Z].nominal_value
-        
+
     try:
         return nuclides[(Z,A)][E][attribute].nominal_value
     except (ValueError, AttributeError):
@@ -291,7 +288,7 @@ for (Z,A) in nuclides:
 
     if not (Z in isotopes):
         isotopes[Z] = []
-    
+
     isotopes[Z].append(copy.copy(A))
 
     isotopes[Z].sort()
@@ -315,6 +312,7 @@ def nuc(Z, A, E=0.):
     """
     Return nuclide data for Z, A, and (optionally) E of isomeric state.
     """
+
     return nuclides[(Z,A)][E]
 
 
@@ -324,8 +322,9 @@ def isomers(Z, A):
 
     Energies in MeV.
     """
+
     isom = nuclides[(Z,A)].keys()
-    isom.sort()
+    sorted(isom)
     return isom
 
 
@@ -345,8 +344,8 @@ class Nuclide:
        * Alphanumeric: 'U235', 'U-235', '235U', '235-U'
            -- letters may be lower or uppercase
        * ZAID: 92235, "92235"
-       * Tuple/list: (92, 235), [92, 235] 
-       * Tuple/list with energy: (92, 235, 0.5), [92, 235, 0.5] 
+       * Tuple/list: (92, 235), [92, 235]
+       * Tuple/list with energy: (92, 235, 0.5), [92, 235, 0.5]
        * Dictionary: {'Z':92, 'A':235}
        * Object x with x.Z and x.A integer attributes
        * Metastable, only as "Am242m" or "AM-242M"
@@ -405,7 +404,7 @@ class Nuclide:
                         nuc_id = nuc_id.upper()
 
                         # Metastable
-                        if ( nuc_id[0] in string.ascii_letters 
+                        if ( nuc_id[0] in string.ascii_letters
                                           and nuc_id[-1] == 'M'):
                             metastable = True
                             nuc_id = nuc_id[:-1]
@@ -417,9 +416,11 @@ class Nuclide:
                             s1 = s1.strip()
                             s2 = s2.strip()
                         else:
-                            s1 = filter(lambda x: x in string.ascii_letters, nuc_id)
-                            s2 = filter(lambda x: not (x in string.ascii_letters), nuc_id).strip()
-                            
+                            s1 = list(filter(lambda x: x in string.ascii_letters, nuc_id))
+                            s1=("").join(s1)
+                            s2 = list(filter(lambda x: not (x in string.ascii_letters), nuc_id))
+                            s2=("").join(s2).strip()
+
 
                         # Not sure of the order of s1 & s2,
                         #  so try one, then the other.
@@ -429,11 +430,11 @@ class Nuclide:
                         except:
                             self.Z = sym2z[s2.title()]
                             self.A = int(s1)
-                                
-                        
+
+
                     else: # assume it is a ZAID string
                         self.Z, self.A = zaid2za(nuc_id)
-        
+
         # Metastable can be specified by either E, metastable flag, or A > 400.
         #  If flag is given but E is not, then set E to inf as
         #  an indication that it is not stable, but that the exact
@@ -453,11 +454,11 @@ class Nuclide:
         self.element = z2sym[self.Z]
 
         # Assign E for list of metastable nuclides if E wasn't provided
-        if (self.E is np.inf and 
+        if (self.E is np.inf and
                self.__repr__() in default_isomer_E.keys()):
             self.E = default_isomer_E[self.__repr__()]
-            
-            
+
+
         try:
             self.weight = return_nominal_value(self.Z, self.A, self.E, 'weight')
         except:
@@ -502,5 +503,3 @@ class Nuclide:
 
     def __lt__(self, other):
         return ( (self.Z, self.A, self.E) < (other.Z, other.A, other.E) )
-
-
